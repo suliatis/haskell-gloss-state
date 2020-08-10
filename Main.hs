@@ -1,17 +1,18 @@
 module Main (main) where
 
-import           Control.Concurrent        (threadDelay)
-import           Control.Monad             (sequence, unless)
-import           Data.List                 (find)
-import           Data.Maybe                (fromMaybe)
-import           Graphics.Gloss            (color, pictures, rectangleSolid, translate)
-import           Graphics.Gloss.Data.Color (black, white)
-import           Graphics.Gloss.Rendering  (Picture, State, displayPicture, initState)
-import           Graphics.UI.GLFW          (Key (..), Window, pollEvents, swapBuffers)
-import           Player                    (Direction (..), Player (..), defaultStep, initialPlayer, movePlayer)
-import           Playground                (Playground (..), defualtPlayground, isOutside)
-import           System.Exit               (exitSuccess)
-import           Window                    (keyIsPressed, withWindow)
+import           Control.Concurrent         (threadDelay)
+import           Control.Monad              (sequence, unless)
+import           Control.Monad.State.Strict (StateT, get, lift, put, runStateT)
+import           Data.List                  (find)
+import           Data.Maybe                 (fromMaybe)
+import           Graphics.Gloss             (color, pictures, rectangleSolid, translate)
+import           Graphics.Gloss.Data.Color  (black, white)
+import           Graphics.Gloss.Rendering   (Picture, State, displayPicture, initState)
+import           Graphics.UI.GLFW           (Key (..), Window, pollEvents, swapBuffers)
+import           Player                     (Direction (..), Player (..), defaultStep, initialPlayer, movePlayer)
+import           Playground                 (Playground (..), defualtPlayground, isOutside)
+import           System.Exit                (exitSuccess)
+import           Window                     (keyIsPressed, withWindow)
 
 playground :: Playground
 playground = defualtPlayground
@@ -26,17 +27,22 @@ main :: IO ()
 main = do
   glossState <- initState
   withWindow (width playground) (height playground) "Haskell State" $ \window -> do
-    loop window glossState initialPlayer
+    runStateT (loop window glossState) initialPlayer
     exitSuccess
- where
-  loop window glossState player = do
-    threadDelay sleepInMicros
-    pollEvents
-    renderFrame window glossState player
-    exit <- keyIsPressed window Key'Escape
-    direction <- getDirection window
+
+loop :: Window -> State -> StateT Player IO ()
+loop window glossState = do
+    lift $ threadDelay sleepInMicros
+    lift $ pollEvents
+    player <- get
+    direction <- lift $ getDirection window
     let player' = movePlayer direction player defaultStep
-    unless exit $ loop window glossState $ if isOutside playground player' then player else player'
+    if isOutside playground player'
+       then put player
+       else put player'
+    lift $ renderFrame window glossState player
+    exit <- lift $ keyIsPressed window Key'Escape
+    unless exit $ loop window glossState
 
 getDirection :: Window -> IO Direction
 getDirection window = do
