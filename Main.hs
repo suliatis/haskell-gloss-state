@@ -42,9 +42,17 @@ getDirection :: Window -> IO Direction
 getDirection window = do
   directions <- sequence
     [ getDirection' Key'Left Direction'Left
+    , getDirection' Key'H Direction'Left
+    , getDirection' Key'A Direction'Left
     , getDirection' Key'Down Direction'Down
+    , getDirection' Key'J Direction'Down
+    , getDirection' Key'S Direction'Down
     , getDirection' Key'Up Direction'Up
+    , getDirection' Key'K Direction'Up
+    , getDirection' Key'W Direction'Up
     , getDirection' Key'Right Direction'Right
+    , getDirection' Key'L Direction'Right
+    , getDirection' Key'D Direction'Right
     ]
   let maybeDirection = find actualDirection directions
   return $ fromMaybe Direction'Nope maybeDirection
