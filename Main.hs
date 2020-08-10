@@ -8,16 +8,13 @@ import           Graphics.Gloss            (color, pictures, rectangleSolid, tra
 import           Graphics.Gloss.Data.Color (black, white)
 import           Graphics.Gloss.Rendering  (Picture, State, displayPicture, initState)
 import           Graphics.UI.GLFW          (Key (..), Window, pollEvents, swapBuffers)
-import           Player                    (Direction (..), Player (..), initialPlayer, movePlayer)
+import           Player                    (Direction (..), Player (..), defaultStep, initialPlayer, movePlayer)
+import           Playground                (Playground (..), defualtPlayground, isOutside)
 import           System.Exit               (exitSuccess)
 import           Window                    (keyIsPressed, withWindow)
 
-windowWidth, windowHeight :: Int
-windowWidth = 640
-windowHeight = 480
-
-playerSize :: Float
-playerSize = 20
+playground :: Playground
+playground = defualtPlayground
 
 defaultPlayerStep :: Float
 defaultPlayerStep = 10
@@ -28,7 +25,7 @@ sleepInMicros = 2000
 main :: IO ()
 main = do
   glossState <- initState
-  withWindow windowWidth windowHeight "Haskell Shapes" $ \window -> do
+  withWindow (width playground) (height playground) "Haskell State" $ \window -> do
     loop window glossState initialPlayer
     exitSuccess
  where
@@ -38,8 +35,8 @@ main = do
     renderFrame window glossState player
     exit <- keyIsPressed window Key'Escape
     direction <- getDirection window
-    let newPlayer = movePlayer direction player defaultPlayerStep
-    unless exit $ loop window glossState newPlayer
+    let player' = movePlayer direction player defaultStep
+    unless exit $ loop window glossState $ if isOutside playground player' then player else player'
 
 getDirection :: Window -> IO Direction
 getDirection window = do
@@ -60,11 +57,11 @@ getDirection window = do
 
 renderFrame :: Window -> State -> Player -> IO ()
 renderFrame window glossState player = do
-  displayPicture (windowWidth, windowHeight) white glossState 1.0 $ pictures
+  displayPicture (width playground, height playground) white glossState 1.0 $ pictures
     [ drawPlayer player ]
   swapBuffers window
 
 drawPlayer :: Player -> Picture
-drawPlayer (Player (x, y)) =
-  translate x y $ color black $ rectangleSolid playerSize playerSize
+drawPlayer (Player (x, y) size) =
+  translate x y $ color black $ rectangleSolid size size
 

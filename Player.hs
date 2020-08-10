@@ -1,6 +1,8 @@
 module Player
-  ( Player(..)
-  , Direction(..)
+  ( Player (..)
+  , Step (..)
+  , Direction (..)
+  , defaultStep
   , initialPlayer
   , movePlayer
   )
@@ -8,10 +10,18 @@ where
 
 import           Graphics.Gloss (Point)
 
-data Player = Player { position :: Point }
+data Player = Player
+  { position :: Point
+  , size     :: Float
+  }
+
+data Step = Step Float
 
 initialPlayer :: Player
-initialPlayer = Player(0,0)
+initialPlayer = Player (0,0) 20
+
+defaultStep :: Step
+defaultStep = Step 10
 
 data Direction
   = Direction'Left
@@ -20,12 +30,12 @@ data Direction
   | Direction'Right
   | Direction'Nope
 
-movePlayer :: Direction -> Player -> Float -> Player
-movePlayer direction (Player(x, y)) step =
+movePlayer :: Direction -> Player -> Step -> Player
+movePlayer direction (Player (x, y) size) (Step step) =
     case direction of
-      Direction'Left  -> Player(x - step, y)
-      Direction'Down  -> Player(x, y - step)
-      Direction'Up    -> Player(x, y + step)
-      Direction'Right -> Player(x + step, y)
-      Direction'Nope  -> Player(x, y)
+      Direction'Left  -> Player (x - step, y) size
+      Direction'Down  -> Player (x, y - step) size
+      Direction'Up    -> Player (x, y + step) size
+      Direction'Right -> Player (x + step, y) size
+      Direction'Nope  -> Player (x, y) size
 
